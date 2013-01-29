@@ -35,15 +35,13 @@ mkdir build
 
 OPTS="--without-x --disable-shared"
 
-cd build
+mkdir -p build/texk/kpathsea build/texk/web2c
 
-mkdir texk
-cd texk
+# cp demo_files/texmf.cnf src/texk/kpathsea/texmf.cnf
+# cp demo_files/texmf.cnf build/texk/web2c/texmf.cnf
 
-mkdir kpathsea web2c
-
-cd kpathsea
-#sed -ir 's/assert\ \(ret\)/\/\/assert\ \(ret\)/' ../../../src/texk/kpathsea/progname.c
+cd build/texk/kpathsea
+sed -ri 's/assert\ \(ret\)/\/\/assert\ \(ret\)/' ../../../src/texk/kpathsea/progname.c
 ../../../src/texk/kpathsea/configure $OPTS
 make
 
@@ -71,20 +69,14 @@ function restorebins {
 backupbins
 
 cd ../kpathsea
-make clean
 emconfigure ../../../src/texk/kpathsea/configure $OPTS
+sed -ri 's/\".*\"$/\"\/\"/' paths.h
 emmake make
 
 cd ../web2c
 make clean
-
 restorebins
-
 emconfigure ../../../src/texk/web2c/configure $OPTS
-emmake make bibtex
-
-cp tangleboot.bck tangleboot
-chmod +x tangleboot
 emmake make bibtex
 
 restorebins
@@ -98,10 +90,12 @@ cp tangle.bck tangle
 chmod +x tangle
 emmake make bibtex
 
-#cp -r ../../../demo_files/* .
+cp ../../../demo_files/{test.aux,plain.bst,refs.bib} .
+env EMCC_DEBUG=1 emcc -o bibtex.sa.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --embed-file test.aux --embed-file plain.bst --embed-file refs.bib
+sed -ir 's/_putc/_fputc/' bibtex.sa.js
+node bibtex.sa.js test
 
-env EMCC_DEBUG=1 emcc -o bibtex.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --pre-js pre.js --post-js post.js
-
+cp ../../../release/pre.js ../../../release/post.js .
+env EMCC_DEBUG=1 emcc -o bibtex.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --pre-js pre.js --post-js post.js  --embed-file plain.bst --embed-file refs.bib
 sed -ir 's/_putc/_fputc/' bibtex.js
-
-node bibtex.js test
+cp bibtex.js ../../../release/bibtex-webworker.js
