@@ -37,9 +37,6 @@ OPTS="--without-x --disable-shared"
 
 mkdir -p build/texk/kpathsea build/texk/web2c
 
-# cp demo_files/texmf.cnf src/texk/kpathsea/texmf.cnf
-# cp demo_files/texmf.cnf build/texk/web2c/texmf.cnf
-
 cd build/texk/kpathsea
 sed -ri 's/assert\ \(ret\)/\/\/assert\ \(ret\)/' ../../../src/texk/kpathsea/progname.c
 ../../../src/texk/kpathsea/configure $OPTS
@@ -70,7 +67,7 @@ backupbins
 
 cd ../kpathsea
 emconfigure ../../../src/texk/kpathsea/configure $OPTS
-sed -ri 's/\".*\"$/\"\/\"/' paths.h
+#sed -ri 's/\".*\"$/\"\/\"/' paths.h
 emmake make
 
 cd ../web2c
@@ -90,12 +87,12 @@ cp tangle.bck tangle
 chmod +x tangle
 emmake make bibtex
 
-cp ../../../demo_files/{test.aux,plain.bst,refs.bib} .
-env EMCC_DEBUG=1 emcc -o bibtex.sa.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --embed-file test.aux --embed-file plain.bst --embed-file refs.bib
+cp -r ../../../demo_files/{test.aux,plain.bst,refs.bib,ls-R,texmf.cnf,texmf-config,texmf-var,texmf,texmf-local,texmf-dist,bin} .
+env EMCC_DEBUG=1 emcc -o bibtex.sa.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --embed-file test.aux --embed-file plain.bst --embed-file refs.bib --embed-file ls-R --embed-file texmf.cnf --embed-file texmf-var  --embed-file texmf --embed-file texmf-local --embed-file texmf-dist --embed-file bin  -s FS_LOG=1
 sed -ir 's/_putc/_fputc/' bibtex.sa.js
 node bibtex.sa.js test
 
 cp ../../../release/pre.js ../../../release/post.js .
-env EMCC_DEBUG=1 emcc -o bibtex.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --pre-js pre.js --post-js post.js  --embed-file plain.bst --embed-file refs.bib
-sed -ir 's/_putc/_fputc/' bibtex.js
+emcc -o bibtex.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --pre-js pre.js --post-js post.js --embed-file plain.bst --embed-file refs.bib --embed-file ls-R --embed-file texmf.cnf --embed-file texmf-var  --embed-file texmf --embed-file texmf-local --embed-file texmf-dist --embed-file bin
+#env EMCC_DEBUG=1 emcc -o bibtex.js bibtex.o  lib/lib.a ../kpathsea/.libs/libkpathsea.a --pre-js pre.js --post-js post.js  --embed-file plain.bst --embed-file refs.bib
 cp bibtex.js ../../../release/bibtex-webworker.js
